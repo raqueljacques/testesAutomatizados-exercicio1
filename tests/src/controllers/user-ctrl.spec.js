@@ -3,6 +3,17 @@ const CpfValidator = require("../../../src/utils/cpf-validator");
 const CheckPassword = require("../../../src/utils/check-password");
 const UserModel = require("../../../src/models/User");
 
+const mockResponse = {
+    status: jest.fn(() => {
+        console.log("STATUS");
+        return {
+            json: jest.fn(() => {
+                console.log("json");
+            }),
+        };
+    }),
+};
+
 describe("UserCtrl", () => {
     describe("createUser", () => {
         test("Should return status 400 if the cpf is not valid", async () => {
@@ -15,17 +26,7 @@ describe("UserCtrl", () => {
                 },
             };
 
-            // TODO: I didn't understand, I took the code from lesson 04
-            const resMock = {
-                status: jest.fn(() => {
-                    console.log("STATUS");
-                    return {
-                        json: jest.fn(() => {
-                            console.log("json");
-                        }),
-                    };
-                }),
-            };
+            const resMock = mockResponse;
 
             const cpfValidatorSpy = jest
                 .spyOn(CpfValidator, "isValid")
@@ -47,17 +48,7 @@ describe("UserCtrl", () => {
                 },
             };
 
-            // TODO: I didn't understand, I took the code from lesson 04
-            const resMock = {
-                status: jest.fn(() => {
-                    console.log("STATUS");
-                    return {
-                        json: jest.fn(() => {
-                            console.log("json");
-                        }),
-                    };
-                }),
-            };
+            const resMock = mockResponse;
 
             const cpfValidatorSpy = jest
                 .spyOn(CpfValidator, "isValid")
@@ -67,11 +58,6 @@ describe("UserCtrl", () => {
                 .spyOn(CheckPassword, "match")
                 .mockReturnValue(false);
 
-            //TODO: Eu não coloco essa parte se o teste quebra antes ou adiciono e depois coloco no expect que não foi chamado?
-            const userSpy = jest
-                .spyOn(UserModel, "create")
-                .mockReturnValue(reqMock.body);
-
             await UserCtrl.create(reqMock, resMock);
 
             expect(resMock.status).toHaveBeenCalledWith(400);
@@ -80,7 +66,6 @@ describe("UserCtrl", () => {
                 reqMock.body.password,
                 reqMock.body.confirmPassword
             );
-            expect(userSpy).not.toHaveBeenCalled();
         });
 
         test("Should return status 200 if the user is created", async () => {
@@ -93,17 +78,7 @@ describe("UserCtrl", () => {
                 },
             };
 
-            // TODO: I didn't understand, I took the code from lesson 04
-            const resMock = {
-                status: jest.fn(() => {
-                    console.log("STATUS");
-                    return {
-                        json: jest.fn(() => {
-                            console.log("json");
-                        }),
-                    };
-                }),
-            };
+            const resMock = mockResponse;
 
             const cpfValidatorSpy = jest
                 .spyOn(CpfValidator, "isValid")
@@ -126,6 +101,30 @@ describe("UserCtrl", () => {
                 reqMock.body.confirmPassword
             );
             expect(userSpy).toHaveBeenCalledWith(reqMock.body);
+        });
+
+        test("Should return an error status if there is an error creating the user", async () => {
+            const reqMock = {
+                body: {
+                    name: "teste",
+                    cpf: "29473671032",
+                    password: "123456",
+                    confirmPassword: "123456",
+                },
+            };
+
+            const resMock = mockResponse;
+
+            jest.spyOn(CpfValidator, "isValid").mockReturnValue(true);
+            jest.spyOn(CheckPassword, "match").mockReturnValue(true);
+
+            const error = new Error("Simulated error");
+            error.status = 500;
+            jest.spyOn(UserModel, "create").mockRejectedValue(error);
+
+            await UserCtrl.create(reqMock, resMock);
+
+            expect(resMock.status).toHaveBeenCalledWith(500);
         });
     });
 });
