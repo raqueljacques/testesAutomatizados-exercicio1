@@ -1,4 +1,4 @@
-const user = require("../models/User");
+const user = require("../../../src/models/User");
 
 describe("User", () => {
     describe("create", () => {
